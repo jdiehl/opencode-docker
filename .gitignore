@@ -1,0 +1,15 @@
+# Environment and secrets
+.env
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE
+.vscode/
+
+# Opencode config
+opencode.jsonc

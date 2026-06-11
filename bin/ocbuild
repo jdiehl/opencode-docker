@@ -1,0 +1,6 @@
+#!/bin/bash
+# Build OpenCode Docker Image and ensure shared volumes exist
+
+set -e
+
+docker build -t opencode:latest ~/Documents/MxInternal/opencode-docker
