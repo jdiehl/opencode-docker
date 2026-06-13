@@ -3,4 +3,6 @@
 
 set -e
 
-docker build -t opencode:latest ~/Documents/MxInternal/opencode-docker
+PROJECT_DIR="$(dirname "$(dirname "$0")")"
+
+docker build -t opencode:latest "$PROJECT_DIR"
