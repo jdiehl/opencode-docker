@@ -1,0 +1,82 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "share": "disabled",
+  "autoupdate": "notify",
+  "enabled_providers": [
+    "github-copilot",
+    "opencode-go"
+  ],
+  "default_agent": "plan",
+  "instructions": ["AGENTS.md"],
+  "permission": {
+    "*": "allow",
+    "read": {
+      "*": "allow",
+
+      // secret files should not be readable
+      "*.env": "deny",
+      "*.env.*": "deny",
+      "*.env.example": "allow",
+      "*/.aws/*": "deny",
+      "*/.aws/**": "deny",
+      "*/.ssh/*": "deny",
+      "*/.ssh/**": "deny",
+      "**/secrets/**": "deny",
+      "**/*credentials*": "deny"
+    },
+    "bash": {
+      "*": "allow",
+
+      // Protect secrets from being read via bash
+      "cat *.env": "deny",
+      "cat *.env.*": "deny",
+      "cat */.aws/*": "deny",
+      "head *.env*": "deny",
+      "tail *.env*": "deny",
+      "echo $AWS_*": "deny",
+      "echo $GITHUB_*": "deny",
+      "printenv": "deny",
+      "env": "deny",
+
+      // Credential exfiltration
+      "export*": "deny",
+
+      // Dangerous git operations (regular push allowed, force-push blocked)
+      "git push --force*": "deny",
+      "git push -f *": "deny",
+      "git push --force-with-lease*": "deny",
+      "git reset --hard*": "deny",
+      "git clean -f*": "deny",
+
+      // System destruction
+      "rm -rf /": "deny",
+      "rm -rf /*": "deny",
+      "rm -rf ~": "deny",
+      "rm -rf ~/*": "deny",
+      "rm -rf ..*": "deny",
+      "mkfs.*": "deny",
+      "dd if=*": "deny",
+      "dd of=*": "deny",
+
+      // Shell script injection
+      "curl *|*sh": "deny",
+      "curl *|*bash": "deny",
+      "wget *|*sh": "deny",
+      "wget *|*bash": "deny",
+
+      // acli: write/mutate operations require confirmation
+      "acli * create*": "ask",
+      "acli * update*": "ask",
+      "acli * delete*": "ask",
+      "acli * edit*": "ask",
+      "acli * add*": "ask",
+      "acli * remove*": "ask",
+      "acli * set*": "ask"
+    },
+    "external_directory": {
+      "/tmp/**": "allow",
+      "/home/node/**": "allow",
+      "*": "deny"
+    }
+  }
+}

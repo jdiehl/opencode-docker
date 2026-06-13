@@ -10,6 +10,3 @@ Thumbs.db
 
 # IDE
 .vscode/
-
-# Opencode config
-opencode.jsonc
