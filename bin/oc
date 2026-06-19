@@ -4,15 +4,15 @@
 
 set -e
 
-ENV_FILE=$HOME/.env
-PROFILE=""
-WORKSPACE_PATH=""
+PROFILE="default"
+WORKSPACE_PATH="."
 ADDITIONAL_VOLUMES=()
 DOCKER_ARGS=()
 
 # Parse flags with getopts
-while getopts "p:v:" opt; do
+while getopts "e:p:v:" opt; do
   case $opt in
+    e) ENV_FILE="$OPTARG" ;;
     p) PROFILE="$OPTARG" ;;
     v) ADDITIONAL_VOLUMES+=("-v" "$OPTARG") ;;
     \?) echo "Invalid option: -$OPTARG" >&2; exit 1 ;;
@@ -30,38 +30,37 @@ if [[ $# -gt 0 ]]; then
   DOCKER_ARGS=("$@")
 fi
 
-if [[ -z "$WORKSPACE_PATH" ]]; then
-  WORKSPACE_PATH="."
-fi
-
-if [[ -z "$PROFILE" ]]; then
-  PROFILE="mx"
-fi
-
 # Build docker run command
 # Extract volumes from docker-compose.yml and convert them to docker run flags
-VOLUME_FLAGS=()
+EXTRA_FLAGS=()
 
 # Shared volumes
-VOLUME_FLAGS+=("-v" "opencode-npm:/home/node/.npm-global")
-VOLUME_FLAGS+=("-v" "opencode-pip:/usr/local/lib/python3/dist-packages")
+EXTRA_FLAGS+=("-v" "opencode-npm:/home/node/.npm-global")
+EXTRA_FLAGS+=("-v" "opencode-pip:/usr/local/lib/python3/dist-packages")
 
 # Data volumes with PROFILE
-VOLUME_FLAGS+=("-v" "opencode-data-$PROFILE:/home/node/.local")
+EXTRA_FLAGS+=("-v" "opencode-data-$PROFILE:/home/node/.local")
 
 # Host volumes (expand ~ for home directory)
-VOLUME_FLAGS+=("-v" "$HOME/.aws:/home/node/.aws:ro")
+EXTRA_FLAGS+=("-v" "$HOME/.aws:/home/node/.aws:ro")
 
 # Workspace override
-VOLUME_FLAGS+=("-v" "$WORKSPACE_PATH:/workspace")
+EXTRA_FLAGS+=("-v" "$WORKSPACE_PATH:/workspace")
 
 # Additional volumes from CLI
-VOLUME_FLAGS+=("${ADDITIONAL_VOLUMES[@]}")
+EXTRA_FLAGS+=("${ADDITIONAL_VOLUMES[@]}")
+
+if [[ -n "$ENV_FILE" ]]; then
+  if [[ ! -f "$ENV_FILE" ]]; then
+    echo "Error: Environment file '$ENV_FILE' not found." >&2
+    exit 1
+  fi
+  EXTRA_FLAGS+=("--env-file" "$ENV_FILE")
+fi
 
 # Run docker with cleanup on exit
 docker run --rm -it \
-  "${VOLUME_FLAGS[@]}" \
-  --env-file "$ENV_FILE" \
+  "${EXTRA_FLAGS[@]}" \
   opencode:latest \
   "${DOCKER_ARGS[@]}"
 
