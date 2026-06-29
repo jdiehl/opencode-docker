@@ -61,3 +61,16 @@ oc ~/workspace --session <sessionID>
 
 - **AWS credentials** — `~/.aws` is mounted read-only to enable Bedrock usage. To disable, edit `bin/oc`
 - **Protected paths** — Access to `.env`, `.aws`, `.ssh` is blocked from OpenCode
+
+## Troubleshooting
+
+### `Permission denied` on `/workspace` (or any host bind mount)
+
+If the container can list `$HOME` fine but `~/Documents`, `~/Downloads`, or `~/Desktop` fail with `Permission denied` — even when running as root — the cause is **macOS TCC (Transparency, Consent, and Control)**, not Linux permissions. The macOS kernel blocks the read at the file-sharing layer (colima's `sshfs`/`virtiofs`) before it reaches the container.
+
+Fix:
+
+1. **System Settings → Privacy & Security → Full Disk Access** and grant access to your terminal app (`Terminal.app`, `iTerm2`, etc.) and/or `colima`.
+2. Quit the terminal completely (Cmd-Q), then `colima stop && colima start` so the file-sharing connection re-establishes with the new permission.
+
+Bind mounts under `~` (not inside a TCC-protected subfolder) keep working without this change.
