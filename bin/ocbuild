@@ -5,4 +5,4 @@ set -e
 
 PROJECT_DIR="$(dirname "$(dirname "$0")")"
 
-docker build -t opencode:latest "$PROJECT_DIR"
+docker buildx build --no-cache -t opencode:latest "$PROJECT_DIR"
