@@ -41,9 +41,6 @@ EXTRA_FLAGS+=("-v" "opencode-pip:/usr/local/lib/python3/dist-packages")
 # Data volumes with PROFILE
 EXTRA_FLAGS+=("-v" "opencode-data-$PROFILE:/home/node/.local")
 
-# Host volumes (expand ~ for home directory)
-EXTRA_FLAGS+=("-v" "$HOME/.aws:/home/node/.aws:ro")
-
 # Workspace override
 EXTRA_FLAGS+=("-v" "$WORKSPACE_PATH:/workspace")
 
