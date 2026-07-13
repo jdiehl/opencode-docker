@@ -1,0 +1,24 @@
+#!/bin/bash
+# OpenCode autoupdate launcher
+# Checks npm registry for a newer opencode-ai version and updates if needed,
+# then execs the real opencode binary. Designed to be fast on the common path
+# (up-to-date) and resilient to network failures.
+
+set -e
+
+REAL_OPENCODE="/home/node/.npm-global/bin/opencode"
+
+if [[ -z "${OC_SKIP_UPDATE:-}" ]]; then
+  LATEST=$(npm view opencode-ai version 2>/dev/null || true)
+
+  if [[ -n "$LATEST" ]]; then
+    INSTALLED=$("$REAL_OPENCODE" --version 2>/dev/null || echo "")
+
+    if [[ -n "$INSTALLED" && "$LATEST" != "$INSTALLED" ]]; then
+      echo "Updating opencode $INSTALLED → $LATEST..."
+      npm install -g opencode-ai@latest
+    fi
+  fi
+fi
+
+exec "$REAL_OPENCODE" "$@"

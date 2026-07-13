@@ -10,7 +10,7 @@ LABEL description="Docker environment for OpenCode AI agent with shared tooling 
 # Default entry point: bash shell that launches OpenCode by default.
 # Override the command (e.g. `-c "..."`, or `-ic` for a shell) for ad-hoc tasks.
 ENTRYPOINT ["/bin/bash"]
-CMD ["-c", "opencode"]
+CMD ["-c", "opencode-launcher"]
 
 # Prevent interactive prompts
 ENV DEBIAN_FRONTEND=noninteractive
@@ -91,3 +91,7 @@ RUN which git curl jq opencode && echo "✓ All tools installed"
 
 # Copy opencode config
 COPY --chown=node:node config/opencode.jsonc /home/node/.config/opencode/opencode.jsonc
+
+# Install autoupdate launcher wrapper
+COPY --chown=node:node bin/opencode-launcher /usr/local/bin/opencode-launcher
+RUN chmod +x /usr/local/bin/opencode-launcher
