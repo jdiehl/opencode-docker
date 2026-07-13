@@ -56,7 +56,7 @@ if [[ -n "$ENV_FILE" ]]; then
 fi
 
 # Run docker with cleanup on exit
-docker run --rm -it \
+docker run --rm -it --network host \
   "${EXTRA_FLAGS[@]}" \
   opencode:latest \
   "${DOCKER_ARGS[@]}"
