@@ -7,6 +7,7 @@
 set -e
 
 REAL_OPENCODE="/home/node/.npm-global/bin/opencode"
+NPM_LIB_DIR="/home/node/.npm-global/lib/node_modules"
 
 if [[ -z "${OC_SKIP_UPDATE:-}" ]]; then
   LATEST=$(npm view opencode-ai version 2>/dev/null || true)
@@ -16,6 +17,13 @@ if [[ -z "${OC_SKIP_UPDATE:-}" ]]; then
 
     if [[ -n "$INSTALLED" && "$LATEST" != "$INSTALLED" ]]; then
       echo "Updating opencode $INSTALLED → $LATEST..."
+
+      export npm_config_tmp="/tmp/npm-install-$$"
+      mkdir -p "$npm_config_tmp"
+
+      find "$NPM_LIB_DIR" -maxdepth 1 -type d -name '.opencode-ai-*' \
+        -exec rm -rf {} + 2>/dev/null || true
+
       npm install -g opencode-ai@latest
     fi
   fi

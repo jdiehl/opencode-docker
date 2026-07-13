@@ -1,37 +1,73 @@
 #!/bin/bash
 # OpenCode Docker Runner
-# Usage: oc [-p <PROFILE>] [-v <host>:<container>] ... <workspace-path> [docker-args...]"
+# Usage: oc [options] <workspace-path> [-- [docker-args...]]
+#
+# Options:
+#   -p, --profile NAME        Named profile for the data volume (default: default)
+#   -e, --env-file FILE       Path to an env file to pass via --env-file
+#       --env KEY=VAL         Pass a single env var to the container
+#   -v, --volume HOST:CONT    Additional bind/volume mount
+#       --name NAME           Container name
+#   -d, --detach              Run container in background
+#       --network NET         Override the default 'host' network mode
+#       --                    Separator; everything after is forwarded to docker run
+#       -X, --any-flag        Any unrecognized flag is forwarded to docker run as-is
+#
+# Examples:
+#   oc .
+#   oc -p dev .
+#   oc -e .env .
+#   oc --name mybox -p dev .
+#   oc --network bridge .
+#   oc . -- --rm --privileged
 
 set -e
 
 PROFILE="default"
-WORKSPACE_PATH="."
+WORKSPACE_PATH=""
 ADDITIONAL_VOLUMES=()
-DOCKER_ARGS=()
+DOCKER_PASSTHROUGH=()
+DOCKER_NETWORK="host"
+ENV_FILE=""
+PASSTHROUGH_ALL=0
 
-# Parse flags with getopts
-while getopts "e:p:v:" opt; do
-  case $opt in
-    e) ENV_FILE="$OPTARG" ;;
-    p) PROFILE="$OPTARG" ;;
-    v) ADDITIONAL_VOLUMES+=("-v" "$OPTARG") ;;
-    \?) echo "Invalid option: -$OPTARG" >&2; exit 1 ;;
-    :) echo "Option -$OPTARG requires an argument" >&2; exit 1 ;;
+# Parse flags with a custom long-flag parser.
+# - Flags may appear in any position.
+# - The first non-flag positional becomes WORKSPACE_PATH.
+# - Positionals after the workspace are forwarded to docker run.
+# - `--` switches to passthrough mode: all remaining args go to docker run verbatim.
+while [[ $# -gt 0 ]]; do
+  if [[ "$PASSTHROUGH_ALL" -eq 1 ]]; then
+    DOCKER_PASSTHROUGH+=("$1")
+    shift
+    continue
+  fi
+
+  case "$1" in
+    -p|--profile)         PROFILE="$2"; shift 2 ;;
+    -e|--env-file)        ENV_FILE="$2"; shift 2 ;;
+    -v|--volume)          ADDITIONAL_VOLUMES+=("-v" "$2"); shift 2 ;;
+    --env)                DOCKER_PASSTHROUGH+=("-e" "$2"); shift 2 ;;
+    --name)               DOCKER_PASSTHROUGH+=("--name" "$2"); shift 2 ;;
+    -d|--detach)          DOCKER_PASSTHROUGH+=("-d"); shift ;;
+    --network)            DOCKER_NETWORK="$2"; shift 2 ;;
+    --)                   PASSTHROUGH_ALL=1; shift ;;
+    -*)                   DOCKER_PASSTHROUGH+=("$1"); shift ;;
+    *)
+      if [[ -z "$WORKSPACE_PATH" ]]; then
+        WORKSPACE_PATH="$1"
+        shift
+      else
+        DOCKER_PASSTHROUGH+=("$1")
+        shift
+      fi
+      ;;
   esac
 done
 
-# Shift past the processed flags
-shift $((OPTIND - 1))
-
-# Remaining arguments: workspace path and docker args
-if [[ $# -gt 0 ]]; then
-  WORKSPACE_PATH="$1"
-  shift
-  DOCKER_ARGS=("$@")
-fi
+WORKSPACE_PATH="${WORKSPACE_PATH:-.}"
 
 # Build docker run command
-# Extract volumes from docker-compose.yml and convert them to docker run flags
 EXTRA_FLAGS=()
 
 # Shared volumes
@@ -56,10 +92,10 @@ if [[ -n "$ENV_FILE" ]]; then
 fi
 
 # Run docker with cleanup on exit
-docker run --rm -it --network host \
+docker run --rm -it --network "$DOCKER_NETWORK" \
   "${EXTRA_FLAGS[@]}" \
-  opencode:latest \
-  "${DOCKER_ARGS[@]}"
+  "${DOCKER_PASSTHROUGH[@]}" \
+  opencode:latest
 
 EXIT_CODE=$?
 exit $EXIT_CODE

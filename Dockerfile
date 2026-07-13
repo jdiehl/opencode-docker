@@ -93,5 +93,5 @@ RUN which git curl jq opencode && echo "✓ All tools installed"
 COPY --chown=node:node config/opencode.jsonc /home/node/.config/opencode/opencode.jsonc
 
 # Install autoupdate launcher wrapper
-COPY --chown=node:node bin/opencode-launcher /usr/local/bin/opencode-launcher
+COPY --chown=node:node script/opencode-launcher /usr/local/bin/opencode-launcher
 RUN chmod +x /usr/local/bin/opencode-launcher
