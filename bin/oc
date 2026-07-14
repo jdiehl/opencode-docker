@@ -66,6 +66,11 @@ while [[ $# -gt 0 ]]; do
 done
 
 WORKSPACE_PATH="${WORKSPACE_PATH:-.}"
+if [[ ! -d "$WORKSPACE_PATH" ]]; then
+  echo "Error: Workspace path '$WORKSPACE_PATH' does not exist or is not a directory." >&2
+  exit 1
+fi
+WORKSPACE_PATH="$(cd "$WORKSPACE_PATH" && pwd)"
 
 # Build docker run command
 EXTRA_FLAGS=()
