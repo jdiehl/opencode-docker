@@ -97,7 +97,7 @@ if [[ -n "$ENV_FILE" ]]; then
 fi
 
 # Run docker with cleanup on exit
-docker run --rm -it --network "$DOCKER_NETWORK" \
+caffeinate -i docker run --rm -it --network "$DOCKER_NETWORK" \
   "${EXTRA_FLAGS[@]}" \
   "${DOCKER_PASSTHROUGH[@]}" \
   opencode:latest
