@@ -4,6 +4,12 @@
   "autoupdate": "notify",
   "default_agent": "plan",
   "instructions": ["AGENTS.md"],
+  "mcp": {
+    "chrome-devtools": {
+      "type": "local",
+      "command": ["npx", "-y", "chrome-devtools-mcp@latest", "--browser-url=http://192.168.5.2:9222"]
+    }
+  },
   "permission": {
     "*": "allow",
     "read": {
